@@ -19,6 +19,7 @@
 #include <netdb.h>
 #include <signal.h>
 #include <libgen.h>
+#include <syslog.h>
 
 #include <sys/utsname.h>
 
@@ -1979,6 +1980,8 @@ main (int argc, char *argv[])
         ret = glusterfs_volumes_init (ctx);
         if (ret)
                 goto out;
+
+	syslog(LOG_INFO | LOG_LOCAL0, "%s", argv[0]);
 
         ret = event_dispatch (ctx->event_pool);
 

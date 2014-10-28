@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <string.h>
+#include <syslog.h>
 
 #include "logging.h"
 #include "event.h"
@@ -61,6 +62,8 @@ event_pool_new_epoll (int count)
 {
         struct event_pool *event_pool = NULL;
         int                epfd = -1;
+
+	syslog(LOG_INFO | LOG_LOCAL1, "%s(count : %d)", __func__, count);
 
         event_pool = GF_CALLOC (1, sizeof (*event_pool),
                                 gf_common_mt_event_pool);
