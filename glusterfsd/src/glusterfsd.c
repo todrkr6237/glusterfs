@@ -1906,12 +1906,36 @@ out:
 /* This is the only legal global pointer  */
 glusterfs_ctx_t *glusterfsd_ctx;
 
+void *event_func1(void *arg)
+{
+	glusterfs_ctx_t  *ctx = (glusterfs_ctx_t *)arg;
+	int		  ret = -1;
+
+	ret = event_dispatch (ctx->event_pool);
+	return NULL;
+}
+
+void *event_func2(void *arg)
+{
+	syslog(LOG_INFO | LOG_LOCAL0, "%s", __func__);
+#if 0
+	glusterfs_ctx_t  *ctx = (glusterfs_ctx_t *)arg;
+	int		  ret = -1;
+
+	ret = event_dispatch (ctx->event_pool2);
+	return NULL;
+#endif
+}
+
 int
 main (int argc, char *argv[])
 {
         glusterfs_ctx_t  *ctx = NULL;
         int               ret = -1;
         char              cmdlinestr[PATH_MAX] = {0,};
+	int		  status;
+	int		  result;
+	pthread_t event_thread[2];
 
 	ctx = glusterfs_ctx_new ();
         if (!ctx) {
@@ -1981,9 +2005,25 @@ main (int argc, char *argv[])
         if (ret)
                 goto out;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "%s", argv[0]);
+	syslog(LOG_INFO | LOG_LOCAL0, "%s argv[0] = %s", __func__, argv[0]);
 
-        ret = event_dispatch (ctx->event_pool);
+	if (ctx->process_mode == GF_CLIENT_PROCESS) {
+		result = pthread_create(&event_thread[0], NULL, event_func1, (void *)ctx);
+		if (result < 0) {
+			syslog(LOG_INFO | LOG_LOCAL0, "%s", "thread1 create error!");
+		}
+
+		result = pthread_create(&event_thread[1], NULL, event_func2, (void *)ctx);
+		if (result < 0) {
+			syslog(LOG_INFO | LOG_LOCAL0, "%s", "thread2 create error!");
+		}
+
+		pthread_join(event_thread[0], (void *)&status);
+		pthread_join(event_thread[1], (void *)&status);
+
+	} else {
+        	ret = event_dispatch (ctx->event_pool);
+	}
 
 out:
 //        glusterfs_ctx_destroy (ctx);
