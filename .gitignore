@@ -51,6 +51,8 @@ glusterfsd/src/.libs/glusterfsd
 glusterfsd/src/glusterfsd
 heal/src/.libs/glfsheal
 heal/src/glfsheal
-
+api/examples/setup.py
+argp-standalone/autom4te.cache/
+autom4te.cache/
 # vim 
 *.swp
