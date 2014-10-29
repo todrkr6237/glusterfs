@@ -4609,6 +4609,7 @@ fuse_get_mount_status (xlator_t *this)
         return kid_status;
 }
 
+/* dskim */
 static void *
 fuse_thread_proc (void *data)
 {
@@ -4625,6 +4626,8 @@ fuse_thread_proc (void *data)
         struct pollfd             pfd[2] = {{0,}};
         gf_boolean_t              mount_finished = _gf_false;
 
+	syslog(LOG_INFO | LOG_LOCAL0, "%s", __func__);
+
         this = data;
         priv = this->private;
         fuse_ops = priv->fuse_ops;
@@ -4638,6 +4641,7 @@ fuse_thread_proc (void *data)
 
         for (;;) {
                 /* THIS has to be reset here */
+		syslog(LOG_INFO | LOG_LOCAL1, "%s", this->name);
                 THIS = this;
 
                 if (!mount_finished) {
