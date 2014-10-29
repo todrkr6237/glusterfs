@@ -4641,7 +4641,6 @@ fuse_thread_proc (void *data)
 
         for (;;) {
                 /* THIS has to be reset here */
-		syslog(LOG_INFO | LOG_LOCAL1, "%s", this->name);
                 THIS = this;
 
                 if (!mount_finished) {
@@ -4709,6 +4708,8 @@ fuse_thread_proc (void *data)
                 }
 
                 iov_in[1].iov_base = iobuf->ptr;
+
+		syslog(LOG_INFO | LOG_LOCAL1, "priv->fd : %d", priv->fd);
 
                 res = readv (priv->fd, iov_in, 2);
 
