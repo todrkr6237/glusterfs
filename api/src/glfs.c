@@ -32,6 +32,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <limits.h>
+#include <syslog.h>
 
 #ifndef _CONFIG_H
 #define _CONFIG_H
@@ -655,6 +656,8 @@ int
 glfs_init_common (struct glfs *fs)
 {
 	int  ret = -1;
+
+	syslog(LOG_INFO | LOG_LOCAL0, "%s", __func__);
 
 	ret = create_master (fs);
 	if (ret)

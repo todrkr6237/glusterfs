@@ -7,7 +7,7 @@
   later), or the GNU General Public License, version 2 (GPLv2), in all
   cases as published by the Free Software Foundation.
 */
-
+#include <syslog.h>
 #include <sys/wait.h>
 #include "fuse-bridge.h"
 #include "mount-gluster-compat.h"
@@ -3770,6 +3770,8 @@ fuse_init (xlator_t *this, fuse_in_header_t *finh, void *msg)
         int                   ret       = 0;
         int                   pfd[2]    = {0,};
         pthread_t             messenger;
+
+	syslog(LOG_INFO | LOG_LOCAL0, "%s", __func__);
 
         priv = this->private;
 
