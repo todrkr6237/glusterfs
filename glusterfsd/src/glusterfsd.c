@@ -2005,7 +2005,10 @@ main (int argc, char *argv[])
         if (ret)
                 goto out;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "%s argv[0] = %s", __func__, argv[0]);
+	syslog(LOG_INFO | LOG_LOCAL0, "----%s----", __func__);
+	for (i = 0; i < argc; i++) {
+		syslog(LOG_INFO | LOG_LOCAL0, "%s", argv[i]);
+	}
 
 	if (ctx->process_mode == GF_CLIENT_PROCESS) {
 		result = pthread_create(&event_thread[0], NULL, event_func1, (void *)ctx);

@@ -423,6 +423,8 @@ posix_aio_thread (void *data)
 	THIS = this;
         priv = this->private;
 
+	syslog(LOG_INFO | LOG_LOCAL0, "%s", __func__);
+
         for (;;) {
                 memset (&events[0], 0, sizeof (events));
                 ret = io_getevents (priv->ctxp, 1, POSIX_AIO_MAX_NR_GETEVENTS,
