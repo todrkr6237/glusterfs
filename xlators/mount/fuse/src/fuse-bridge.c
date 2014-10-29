@@ -4709,8 +4709,6 @@ fuse_thread_proc (void *data)
 
                 iov_in[1].iov_base = iobuf->ptr;
 
-		syslog(LOG_INFO | LOG_LOCAL1, "priv->fd : %d", priv->fd);
-
                 res = readv (priv->fd, iov_in, 2);
 
                 if (res == -1) {
@@ -4766,6 +4764,12 @@ fuse_thread_proc (void *data)
                 }
 
                 priv->iobuf = iobuf;
+		
+		if (finh->opcode == FUSE_WRITE) {
+			syslog(LOG_INFO | LOG_LOCAL1, "FUSE_WRITE");
+		} else if (finh->opcode == FUSE_READ) {
+			syslog(LOG_INFO | LOG_LOCAL1, "FUSE_READ");
+		}
 
                 if (finh->opcode == FUSE_WRITE)
                         msg = iov_in[1].iov_base;
