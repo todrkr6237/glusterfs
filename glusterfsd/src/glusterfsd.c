@@ -1935,6 +1935,7 @@ main (int argc, char *argv[])
         char              cmdlinestr[PATH_MAX] = {0,};
 	int		  status;
 	int		  result;
+	int		  i;
 	pthread_t event_thread[2];
 
 	ctx = glusterfs_ctx_new ();

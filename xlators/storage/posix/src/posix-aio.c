@@ -12,6 +12,7 @@
 #include "config.h"
 #endif
 
+#include <syslog.h>
 #include "xlator.h"
 #include "glusterfs.h"
 #include "posix.h"
