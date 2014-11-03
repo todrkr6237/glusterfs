@@ -4708,6 +4708,8 @@ fuse_thread_proc (void *data)
                 }
 
                 iov_in[1].iov_base = iobuf->ptr;
+	
+		//syslog(LOG_INFO | LOG_LOCAL1, "priv->fd : %d",  priv->fd);
 
                 res = readv (priv->fd, iov_in, 2);
 
