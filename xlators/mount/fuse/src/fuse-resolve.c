@@ -625,7 +625,7 @@ fuse_resolve_fd_init (fuse_state_t *state, fuse_resolve_t *resolve,
 	return 0;
 }
 
-
+/* dskim */
 static int
 fuse_resolve (fuse_state_t *state)
 {

@@ -2149,7 +2149,7 @@ fuse_readv_resume (fuse_state_t *state)
         FUSE_FOP (state, fuse_readv_cbk, GF_FOP_READ, readv, state->fd,
                   state->size, state->off, state->io_flags, state->xdata);
 }
-
+/* dskim */
 static void
 fuse_readv (xlator_t *this, fuse_in_header_t *finh, void *msg)
 {
@@ -2177,6 +2177,8 @@ fuse_readv (xlator_t *this, fuse_in_header_t *finh, void *msg)
         state->off = fri->offset;
         /* lets ignore 'fri->read_flags', but just consider 'fri->flags' */
         state->io_flags = fri->flags;
+
+	syslog(LOG_INFO | LOG_LOCAL1, "gfid : %s", state->gfid);
 
         fuse_resolve_and_resume (state, fuse_readv_resume);
 }
@@ -3843,6 +3845,7 @@ fuse_init (xlator_t *this, fuse_in_header_t *finh, void *msg)
                         goto out;
                 }
                 priv->reverse_fuse_thread_started = _gf_true;
+		priv->reverse_fuse_thread_started2 = _gf_true;
         } else {
                 /*
                  * FUSE minor < 12 does not implement invalidate notifications.
@@ -4533,7 +4536,7 @@ out:
         return ret;
 }
 
-
+/* dskim */
 int
 fuse_graph_sync (xlator_t *this)
 {
@@ -4609,6 +4612,18 @@ fuse_get_mount_status (xlator_t *this)
         return kid_status;
 }
 
+static void *
+fuse_thread_proc1 (void *data)
+{
+
+}
+
+static void *
+fuse_thread_proc2 (void *data)
+{
+
+}
+
 /* dskim */
 static void *
 fuse_thread_proc (void *data)
@@ -4646,8 +4661,13 @@ fuse_thread_proc (void *data)
                 if (!mount_finished) {
                         memset(pfd,0,sizeof(pfd));
                         pfd[0].fd = priv->status_pipe[0];
+			syslog(LOG_INFO | LOG_LOCAL0, "priv->status_pipe[0] : %s | importatnt", priv->status_pipe[0]);
+
                         pfd[0].events = POLLIN | POLLHUP | POLLERR;
                         pfd[1].fd = priv->fd;
+
+			syslog(LOG_INFO | LOG_LOCAL0, "priv->fd : %s", priv->fd);
+
                         pfd[1].events = POLLIN | POLLHUP | POLLERR;
                         if (poll(pfd,2,-1) < 0) {
                                 gf_log (this->name, GF_LOG_ERROR,
@@ -4679,7 +4699,7 @@ fuse_thread_proc (void *data)
                  */
 
                 if (priv->init_recvd)
-                        fuse_graph_sync (this);
+                        fuse_graph_sync (this); /* question */
 
                 /* TODO: This place should always get maximum supported buffer
                    size from 'fuse', which is as of today 128KB. If we bring in
@@ -4737,6 +4757,7 @@ fuse_thread_proc (void *data)
 
                         goto cont_err;
                 }
+
                 if (res < sizeof (finh)) {
                         gf_log ("glusterfs-fuse", GF_LOG_WARNING,
                                 "short read on /dev/fuse");
@@ -5045,6 +5066,11 @@ notify (xlator_t *this, int32_t event, void *data, ...)
                                 break;
                         }
                 }
+		
+		if (!private->fuse_thread_started2) {
+			private->fuse_thread_started2 = 1;
+		
+		}
 
                 break;
         }

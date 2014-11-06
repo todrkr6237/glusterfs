@@ -70,7 +70,9 @@ struct fuse_private {
         struct iobuf        *iobuf;
 
         pthread_t            fuse_thread;
+        pthread_t            fuse_thread2;
         char                 fuse_thread_started;
+        char                 fuse_thread_started2;
 
         uint32_t             direct_io_mode;
         size_t              *msg0_len_p;
@@ -112,6 +114,7 @@ struct fuse_private {
         int                  revchan_in;
         int                  revchan_out;
         gf_boolean_t         reverse_fuse_thread_started;
+        gf_boolean_t         reverse_fuse_thread_started2;
 
         /* For communicating with separate mount thread. */
         int                  status_pipe[2];
