@@ -4615,13 +4615,13 @@ fuse_get_mount_status (xlator_t *this)
 static void *
 fuse_thread_proc1 (void *data)
 {
-
+	return NULL;
 }
 
 static void *
 fuse_thread_proc2 (void *data)
 {
-
+	return NULL;
 }
 
 /* dskim */
@@ -4661,12 +4661,12 @@ fuse_thread_proc (void *data)
                 if (!mount_finished) {
                         memset(pfd,0,sizeof(pfd));
                         pfd[0].fd = priv->status_pipe[0];
-			syslog(LOG_INFO | LOG_LOCAL0, "priv->status_pipe[0] : %s | importatnt", priv->status_pipe[0]);
+			syslog(LOG_INFO | LOG_LOCAL0, "priv->status_pipe[0] : %d | importatnt", priv->status_pipe[0]);
 
                         pfd[0].events = POLLIN | POLLHUP | POLLERR;
                         pfd[1].fd = priv->fd;
 
-			syslog(LOG_INFO | LOG_LOCAL0, "priv->fd : %s", priv->fd);
+			syslog(LOG_INFO | LOG_LOCAL0, "priv->fd : %d", priv->fd);
 
                         pfd[1].events = POLLIN | POLLHUP | POLLERR;
                         if (poll(pfd,2,-1) < 0) {
