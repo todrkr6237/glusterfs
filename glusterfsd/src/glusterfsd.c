@@ -1917,7 +1917,6 @@ void *event_func1(void *arg)
 
 void *event_func2(void *arg)
 {
-	syslog(LOG_INFO | LOG_LOCAL0, "%s", __func__);
 #if 0
 	glusterfs_ctx_t  *ctx = (glusterfs_ctx_t *)arg;
 	int		  ret = -1;
@@ -1925,6 +1924,7 @@ void *event_func2(void *arg)
 	ret = event_dispatch (ctx->event_pool2);
 	return NULL;
 #endif
+	return NULL;
 }
 
 int
@@ -2006,11 +2006,11 @@ main (int argc, char *argv[])
         if (ret)
                 goto out;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "====glusterfsd====");
+	syslog(LOG_INFO | LOG_LOCAL0, "====glusterfsd start====");
 	for (i = 0; i < argc; i++) {
 		syslog(LOG_INFO | LOG_LOCAL0, "%s", argv[i]);
 	}
-	syslog(LOG_INFO | LOG_LOCAL0, "==================");
+	syslog(LOG_INFO | LOG_LOCAL0, "=====glusterfsd end=====");
 
 	if (ctx->process_mode == GF_CLIENT_PROCESS) {
 		result = pthread_create(&event_thread[0], NULL, event_func1, (void *)ctx);

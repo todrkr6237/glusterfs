@@ -68,6 +68,7 @@ struct fuse_private {
         size_t               volfile_size;
         char                *mount_point;
         struct iobuf        *iobuf;
+	struct iobuf	    *iobuf2;
 
         pthread_t            fuse_thread;
         pthread_t            fuse_thread2;

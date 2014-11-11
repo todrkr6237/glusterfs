@@ -159,7 +159,7 @@ fuse_fd_ctx_get (xlator_t *this, fd_t *fd)
 out:
         return fdctx;
 }
-
+/* dskim */
 /*
  * iov_out should contain a fuse_out_header at zeroth position.
  * The error value of this header is sent to kernel.
@@ -2133,6 +2133,10 @@ fuse_readv_cbk (call_frame_t *frame, void *cookie, xlator_t *this,
                 send_fuse_err (this, finh, op_errno);
         }
 
+#if 0
+	syslog(LOG_INFO | LOG_LOCAL1, "gfid : %s", uuid_utoa (state->gfid));
+#endif
+
         free_fuse_state (state);
         STACK_DESTROY (frame->root);
 
@@ -2177,8 +2181,6 @@ fuse_readv (xlator_t *this, fuse_in_header_t *finh, void *msg)
         state->off = fri->offset;
         /* lets ignore 'fri->read_flags', but just consider 'fri->flags' */
         state->io_flags = fri->flags;
-
-	syslog(LOG_INFO | LOG_LOCAL1, "gfid : %s", state->gfid);
 
         fuse_resolve_and_resume (state, fuse_readv_resume);
 }
@@ -3773,7 +3775,7 @@ fuse_init (xlator_t *this, fuse_in_header_t *finh, void *msg)
         int                   pfd[2]    = {0,};
         pthread_t             messenger;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "%s", __func__);
+	syslog(LOG_INFO | LOG_LOCAL0, "[%d]: %s()", __LINE__, __func__);
 
         priv = this->private;
 
@@ -4615,19 +4617,6 @@ fuse_get_mount_status (xlator_t *this)
 static void *
 fuse_thread_proc1 (void *data)
 {
-	return NULL;
-}
-
-static void *
-fuse_thread_proc2 (void *data)
-{
-	return NULL;
-}
-
-/* dskim */
-static void *
-fuse_thread_proc (void *data)
-{
         char                     *mount_point = NULL;
         xlator_t                 *this = NULL;
         fuse_private_t           *priv = NULL;
@@ -4638,10 +4627,8 @@ fuse_thread_proc (void *data)
         void                     *msg = NULL;
         const size_t              msg0_size = sizeof (*finh) + 128;
         fuse_handler_t          **fuse_ops = NULL;
-        struct pollfd             pfd[2] = {{0,}};
-        gf_boolean_t              mount_finished = _gf_false;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "%s", __func__);
+	syslog(LOG_INFO | LOG_LOCAL0, "%s()", __func__);
 
         this = data;
         priv = this->private;
@@ -4654,41 +4641,12 @@ fuse_thread_proc (void *data)
                               ->default_page_size;
         priv->msg0_len_p = &iov_in[0].iov_len;
 
+	/* TODO how to multi thread */
+	/* dskim thread for */ 
+#if 1
         for (;;) {
                 /* THIS has to be reset here */
                 THIS = this;
-
-                if (!mount_finished) {
-                        memset(pfd,0,sizeof(pfd));
-                        pfd[0].fd = priv->status_pipe[0];
-			syslog(LOG_INFO | LOG_LOCAL0, "priv->status_pipe[0] : %d | importatnt", priv->status_pipe[0]);
-
-                        pfd[0].events = POLLIN | POLLHUP | POLLERR;
-                        pfd[1].fd = priv->fd;
-
-			syslog(LOG_INFO | LOG_LOCAL0, "priv->fd : %d", priv->fd);
-
-                        pfd[1].events = POLLIN | POLLHUP | POLLERR;
-                        if (poll(pfd,2,-1) < 0) {
-                                gf_log (this->name, GF_LOG_ERROR,
-                                        "poll error %s", strerror(errno));
-                                break;
-                        }
-                        if (pfd[0].revents & POLLIN) {
-                                if (fuse_get_mount_status(this) != 0) {
-                                        break;
-                                }
-                                mount_finished = _gf_true;
-                        }
-                        else if (pfd[0].revents) {
-                                gf_log (this->name, GF_LOG_ERROR,
-                                        "mount pipe closed without status");
-                                break;
-                        }
-                        if (!pfd[1].revents) {
-                                continue;
-                        }
-                }
 
                 /*
                  * We don't want to block on readv while we're still waiting
@@ -4700,6 +4658,7 @@ fuse_thread_proc (void *data)
 
                 if (priv->init_recvd)
                         fuse_graph_sync (this); /* question */
+
 
                 /* TODO: This place should always get maximum supported buffer
                    size from 'fuse', which is as of today 128KB. If we bring in
@@ -4787,12 +4746,6 @@ fuse_thread_proc (void *data)
                 }
 
                 priv->iobuf = iobuf;
-		
-		if (finh->opcode == FUSE_WRITE) {
-			syslog(LOG_INFO | LOG_LOCAL1, "FUSE_WRITE");
-		} else if (finh->opcode == FUSE_READ) {
-			syslog(LOG_INFO | LOG_LOCAL1, "FUSE_READ");
-		}
 
                 if (finh->opcode == FUSE_WRITE)
                         msg = iov_in[1].iov_base;
@@ -4837,6 +4790,476 @@ fuse_thread_proc (void *data)
                 iobuf_unref (iobuf);
                 GF_FREE (iov_in[0].iov_base);
         }
+#endif
+
+        /*
+         * We could be in all sorts of states with respect to iobuf and iov_in
+         * by the time we get here, and it's just not worth untangling them if
+         * we're about to kill ourselves anyway.
+         */
+
+        if (dict_get (this->options, ZR_MOUNTPOINT_OPT))
+                mount_point = data_to_str (dict_get (this->options,
+                                                     ZR_MOUNTPOINT_OPT));
+        if (mount_point) {
+                gf_log (this->name, GF_LOG_INFO,
+                        "unmounting %s", mount_point);
+        }
+
+        /* Kill the whole process, not just this thread. */
+        kill (getpid(), SIGTERM);
+        return NULL;
+}
+
+static void *
+fuse_thread_proc2 (void *data)
+{
+        char                     *mount_point = NULL;
+        xlator_t                 *this = NULL;
+        fuse_private_t           *priv = NULL;
+        ssize_t                   res = 0;
+        struct iobuf             *iobuf = NULL;
+        fuse_in_header_t         *finh;
+        struct iovec              iov_in[2];
+        void                     *msg = NULL;
+        const size_t              msg0_size = sizeof (*finh) + 128;
+        fuse_handler_t          **fuse_ops = NULL;
+
+	syslog(LOG_INFO | LOG_LOCAL0, "%s()", __func__);
+
+        this = data;
+        priv = this->private;
+        fuse_ops = priv->fuse_ops;
+
+        THIS = this;
+
+        iov_in[0].iov_len = sizeof (*finh) + sizeof (struct fuse_write_in);
+        iov_in[1].iov_len = ((struct iobuf_pool *)this->ctx->iobuf_pool)
+                              ->default_page_size;
+        priv->msg0_len_p = &iov_in[0].iov_len;
+
+	/* dskim thread for */ 
+#if 1
+        for (;;) {
+                /* THIS has to be reset here */
+                THIS = this;
+
+                /*
+                 * We don't want to block on readv while we're still waiting
+                 * for mount status.  That means we only want to get here if
+                 * mount_status is true (meaning that our wait completed
+                 * already) or if we already called poll(2) on priv->fd to
+                 * make sure it's ready.
+                 */
+
+                if (priv->init_recvd)
+                        fuse_graph_sync (this); /* question */
+
+
+
+                /* TODO: This place should always get maximum supported buffer
+                   size from 'fuse', which is as of today 128KB. If we bring in
+                   support for higher block sizes support, then we should be
+                   changing this one too */
+                iobuf = iobuf_get (this->ctx->iobuf_pool);
+
+                /* Add extra 128 byte to the first iov so that it can
+                 * accommodate "ordinary" non-write requests. It's not
+                 * guaranteed to be big enough, as SETXATTR and namespace
+                 * operations with very long names may grow behind it,
+                 * but it's good enough in most cases (and we can handle
+                 * rest via realloc).
+                 */
+                iov_in[0].iov_base = GF_CALLOC (1, msg0_size,
+                                                gf_fuse_mt_iov_base);
+
+                if (!iobuf || !iov_in[0].iov_base) {
+                        gf_log (this->name, GF_LOG_ERROR,
+                                "Out of memory");
+                        if (iobuf)
+                                iobuf_unref (iobuf);
+                        GF_FREE (iov_in[0].iov_base);
+                        sleep (10);
+                        continue;
+                }
+
+                iov_in[1].iov_base = iobuf->ptr;
+	
+		//syslog(LOG_INFO | LOG_LOCAL1, "priv->fd : %d",  priv->fd);
+
+                res = readv (priv->fd, iov_in, 2);
+
+                if (res == -1) {
+                        if (errno == ENODEV || errno == EBADF) {
+                                gf_log ("glusterfs-fuse", GF_LOG_DEBUG,
+                                        "terminating upon getting %s when "
+                                        "reading /dev/fuse",
+                                        errno == ENODEV ? "ENODEV" : "EBADF");
+                                fuse_log_eh (this, "glusterfs-fuse: terminating"
+                                             " upon getting %s when "
+                                             "reading /dev/fuse",
+                                             errno == ENODEV ? "ENODEV":
+                                             "EBADF");
+                                break;
+                        }
+                        if (errno != EINTR) {
+                                gf_log ("glusterfs-fuse", GF_LOG_WARNING,
+                                        "read from /dev/fuse returned -1 (%s)",
+                                        strerror (errno));
+                                fuse_log_eh (this, "glusterfs-fuse: read from "
+                                             "/dev/fuse returned -1 (%s)",
+                                             strerror (errno));
+                        }
+
+                        goto cont_err;
+                }
+
+                if (res < sizeof (finh)) {
+                        gf_log ("glusterfs-fuse", GF_LOG_WARNING,
+                                "short read on /dev/fuse");
+                        fuse_log_eh (this, "glusterfs-fuse: short read on "
+                                     "/dev/fuse");
+                        break;
+                }
+
+                finh = (fuse_in_header_t *)iov_in[0].iov_base;
+
+                if (res != finh->len
+#ifdef GF_DARWIN_HOST_OS
+                    /* work around fuse4bsd/MacFUSE msg size miscalculation bug,
+                     * that is, payload size is not taken into account for
+                     * buffered writes
+                     */
+                    && !(finh->opcode == FUSE_WRITE &&
+                         finh->len == sizeof(*finh) + sizeof(struct fuse_write_in) &&
+                         res == finh->len + ((struct fuse_write_in *)(finh + 1))->size)
+#endif
+                   ) {
+                        gf_log ("glusterfs-fuse", GF_LOG_WARNING,
+                                "inconsistent read on /dev/fuse");
+                        fuse_log_eh (this, "glusterfs-fuse: inconsistent read "
+                                     "on /dev/fuse");
+                        break;
+                }
+
+                priv->iobuf2 = iobuf;
+
+                if (finh->opcode == FUSE_WRITE)
+                        msg = iov_in[1].iov_base;
+                else {
+                        if (res > msg0_size) {
+                                void *b = GF_REALLOC (iov_in[0].iov_base, res);
+                                if (b) {
+                                        iov_in[0].iov_base = b;
+                                        finh = (fuse_in_header_t *)
+                                                 iov_in[0].iov_base;
+                                }
+                                else {
+                                        gf_log ("glusterfs-fuse", GF_LOG_ERROR,
+                                                "Out of memory");
+                                        send_fuse_err (this, finh, ENOMEM);
+
+                                        goto cont_err;
+                                }
+                        }
+
+                        if (res > iov_in[0].iov_len)
+                                memcpy (iov_in[0].iov_base + iov_in[0].iov_len,
+                                        iov_in[1].iov_base,
+                                        res - iov_in[0].iov_len);
+
+                        msg = finh + 1;
+                }
+                if (priv->uid_map_root &&
+                    finh->uid == priv->uid_map_root)
+                        finh->uid = 0;
+
+                if (finh->opcode >= FUSE_OP_HIGH)
+                        /* turn down MacFUSE specific messages */
+                        fuse_enosys (this, finh, msg);
+                else
+                        fuse_ops[finh->opcode] (this, finh, msg);
+
+                iobuf_unref (iobuf);
+                continue;
+
+ cont_err:
+                iobuf_unref (iobuf);
+                GF_FREE (iov_in[0].iov_base);
+        }
+#endif
+
+        /*
+         * We could be in all sorts of states with respect to iobuf and iov_in
+         * by the time we get here, and it's just not worth untangling them if
+         * we're about to kill ourselves anyway.
+         */
+
+        if (dict_get (this->options, ZR_MOUNTPOINT_OPT))
+                mount_point = data_to_str (dict_get (this->options,
+                                                     ZR_MOUNTPOINT_OPT));
+        if (mount_point) {
+                gf_log (this->name, GF_LOG_INFO,
+                        "unmounting %s", mount_point);
+        }
+
+        /* Kill the whole process, not just this thread. */
+        kill (getpid(), SIGTERM);
+        return NULL;
+}
+
+
+/* dskim */
+static void *
+fuse_thread_proc (void *data)
+{
+        char                     *mount_point = NULL;
+        xlator_t                 *this = NULL;
+        fuse_private_t           *priv = NULL;
+        ssize_t                   res = 0;
+        struct iobuf             *iobuf = NULL;
+        fuse_in_header_t         *finh;
+        struct iovec              iov_in[2];
+        void                     *msg = NULL;
+        const size_t              msg0_size = sizeof (*finh) + 128;
+        fuse_handler_t          **fuse_ops = NULL;
+        struct pollfd             pfd[2] = {{0,}};
+        gf_boolean_t              mount_finished = _gf_false;
+
+	syslog(LOG_INFO | LOG_LOCAL0, "%s()", __func__);
+
+        this = data;
+        priv = this->private;
+        fuse_ops = priv->fuse_ops;
+
+        THIS = this;
+
+        iov_in[0].iov_len = sizeof (*finh) + sizeof (struct fuse_write_in);
+        iov_in[1].iov_len = ((struct iobuf_pool *)this->ctx->iobuf_pool)
+                              ->default_page_size;
+        priv->msg0_len_p = &iov_in[0].iov_len;
+
+	/* TODO how to multi thread */
+#if 0
+	for (;;) {
+		THIS = this;
+		
+		if (!mount_finished) {
+			memset(pfd,0,sizeof(pfd));
+			pfd[0].fd = priv->status_pipe[0];
+	
+			pfd[0].events = POLLIN | POLLHUP | POLLERR;
+			pfd[1].fd = priv->fd;
+
+			pfd[1].events = POLLIN | POLLHUP | POLLERR;
+			if (poll(pfd,2,-1) < 0) {
+				gf_log (this->name, GF_LOG_ERROR,
+					"poll error %s", strerror(errno));
+				goto mount_err;
+			}
+			if (pfd[0].revents & POLLIN) {
+				if (fuse_get_mount_status(this) != 0) {
+					goto mount_err;
+				}
+				mount_finished = _gf_true;
+			}
+			else if (pfd[0].revents) {
+				gf_log (this->name, GF_LOG_ERROR,
+					"mount pipe closed without status");
+				goto mount_err;
+			}
+			if (!pfd[1].revents) {
+				continue;
+			}
+		} else {
+			break;
+		}
+	}
+#endif
+
+	/* dskim thread for */ 
+#if 1
+        for (;;) {
+                /* THIS has to be reset here */
+                THIS = this;
+
+#if 0
+                if (!mount_finished) {
+                        memset(pfd,0,sizeof(pfd));
+                        pfd[0].fd = priv->status_pipe[0];
+			syslog(LOG_INFO | LOG_LOCAL0, "priv->status_pipe[0] : %d | importatnt", priv->status_pipe[0]);
+
+                        pfd[0].events = POLLIN | POLLHUP | POLLERR;
+                        pfd[1].fd = priv->fd;
+
+			syslog(LOG_INFO | LOG_LOCAL0, "priv->fd : %d", priv->fd);
+
+                        pfd[1].events = POLLIN | POLLHUP | POLLERR;
+                        if (poll(pfd,2,-1) < 0) {
+                                gf_log (this->name, GF_LOG_ERROR,
+                                        "poll error %s", strerror(errno));
+                                break;
+                        }
+                        if (pfd[0].revents & POLLIN) {
+                                if (fuse_get_mount_status(this) != 0) {
+                                        break;
+                                }
+                                mount_finished = _gf_true;
+                        }
+                        else if (pfd[0].revents) {
+                                gf_log (this->name, GF_LOG_ERROR,
+                                        "mount pipe closed without status");
+                                break;
+                        }
+                        if (!pfd[1].revents) {
+                                continue;
+                        }
+                }
+#endif
+                /*
+                 * We don't want to block on readv while we're still waiting
+                 * for mount status.  That means we only want to get here if
+                 * mount_status is true (meaning that our wait completed
+                 * already) or if we already called poll(2) on priv->fd to
+                 * make sure it's ready.
+                 */
+
+                if (priv->init_recvd)
+                        fuse_graph_sync (this); /* question */
+
+
+
+                /* TODO: This place should always get maximum supported buffer
+                   size from 'fuse', which is as of today 128KB. If we bring in
+                   support for higher block sizes support, then we should be
+                   changing this one too */
+                iobuf = iobuf_get (this->ctx->iobuf_pool);
+
+                /* Add extra 128 byte to the first iov so that it can
+                 * accommodate "ordinary" non-write requests. It's not
+                 * guaranteed to be big enough, as SETXATTR and namespace
+                 * operations with very long names may grow behind it,
+                 * but it's good enough in most cases (and we can handle
+                 * rest via realloc).
+                 */
+                iov_in[0].iov_base = GF_CALLOC (1, msg0_size,
+                                                gf_fuse_mt_iov_base);
+
+                if (!iobuf || !iov_in[0].iov_base) {
+                        gf_log (this->name, GF_LOG_ERROR,
+                                "Out of memory");
+                        if (iobuf)
+                                iobuf_unref (iobuf);
+                        GF_FREE (iov_in[0].iov_base);
+                        sleep (10);
+                        continue;
+                }
+
+                iov_in[1].iov_base = iobuf->ptr;
+	
+		//syslog(LOG_INFO | LOG_LOCAL1, "priv->fd : %d",  priv->fd);
+
+                res = readv (priv->fd, iov_in, 2);
+
+                if (res == -1) {
+                        if (errno == ENODEV || errno == EBADF) {
+                                gf_log ("glusterfs-fuse", GF_LOG_DEBUG,
+                                        "terminating upon getting %s when "
+                                        "reading /dev/fuse",
+                                        errno == ENODEV ? "ENODEV" : "EBADF");
+                                fuse_log_eh (this, "glusterfs-fuse: terminating"
+                                             " upon getting %s when "
+                                             "reading /dev/fuse",
+                                             errno == ENODEV ? "ENODEV":
+                                             "EBADF");
+                                break;
+                        }
+                        if (errno != EINTR) {
+                                gf_log ("glusterfs-fuse", GF_LOG_WARNING,
+                                        "read from /dev/fuse returned -1 (%s)",
+                                        strerror (errno));
+                                fuse_log_eh (this, "glusterfs-fuse: read from "
+                                             "/dev/fuse returned -1 (%s)",
+                                             strerror (errno));
+                        }
+
+                        goto cont_err;
+                }
+
+                if (res < sizeof (finh)) {
+                        gf_log ("glusterfs-fuse", GF_LOG_WARNING,
+                                "short read on /dev/fuse");
+                        fuse_log_eh (this, "glusterfs-fuse: short read on "
+                                     "/dev/fuse");
+                        break;
+                }
+
+                finh = (fuse_in_header_t *)iov_in[0].iov_base;
+
+                if (res != finh->len
+#ifdef GF_DARWIN_HOST_OS
+                    /* work around fuse4bsd/MacFUSE msg size miscalculation bug,
+                     * that is, payload size is not taken into account for
+                     * buffered writes
+                     */
+                    && !(finh->opcode == FUSE_WRITE &&
+                         finh->len == sizeof(*finh) + sizeof(struct fuse_write_in) &&
+                         res == finh->len + ((struct fuse_write_in *)(finh + 1))->size)
+#endif
+                   ) {
+                        gf_log ("glusterfs-fuse", GF_LOG_WARNING,
+                                "inconsistent read on /dev/fuse");
+                        fuse_log_eh (this, "glusterfs-fuse: inconsistent read "
+                                     "on /dev/fuse");
+                        break;
+                }
+
+                priv->iobuf = iobuf;
+
+                if (finh->opcode == FUSE_WRITE)
+                        msg = iov_in[1].iov_base;
+                else {
+                        if (res > msg0_size) {
+                                void *b = GF_REALLOC (iov_in[0].iov_base, res);
+                                if (b) {
+                                        iov_in[0].iov_base = b;
+                                        finh = (fuse_in_header_t *)
+                                                 iov_in[0].iov_base;
+                                }
+                                else {
+                                        gf_log ("glusterfs-fuse", GF_LOG_ERROR,
+                                                "Out of memory");
+                                        send_fuse_err (this, finh, ENOMEM);
+
+                                        goto cont_err;
+                                }
+                        }
+
+                        if (res > iov_in[0].iov_len)
+                                memcpy (iov_in[0].iov_base + iov_in[0].iov_len,
+                                        iov_in[1].iov_base,
+                                        res - iov_in[0].iov_len);
+
+                        msg = finh + 1;
+                }
+                if (priv->uid_map_root &&
+                    finh->uid == priv->uid_map_root)
+                        finh->uid = 0;
+
+                if (finh->opcode >= FUSE_OP_HIGH)
+                        /* turn down MacFUSE specific messages */
+                        fuse_enosys (this, finh, msg);
+                else
+                        fuse_ops[finh->opcode] (this, finh, msg);
+
+                iobuf_unref (iobuf);
+                continue;
+
+ cont_err:
+                iobuf_unref (iobuf);
+                GF_FREE (iov_in[0].iov_base);
+        }
+#endif
 
         /*
          * We could be in all sorts of states with respect to iobuf and iov_in
@@ -5021,6 +5444,11 @@ notify (xlator_t *this, int32_t event, void *data, ...)
         fuse_private_t     *private = NULL;
         glusterfs_graph_t  *graph = NULL;
 
+	char		   *mount_point = NULL;
+	struct pollfd	    pfd[2] = {{0,}};
+	gf_boolean_t	    mount_finished = _gf_false;
+
+
         private = this->private;
 
         graph = data;
@@ -5057,19 +5485,70 @@ notify (xlator_t *this, int32_t event, void *data, ...)
                 if (!private->fuse_thread_started) {
                         private->fuse_thread_started = 1;
 
+			for (;;) {
+				if (!mount_finished) {
+					memset(pfd,0,sizeof(pfd));
+					pfd[0].fd = private->status_pipe[0];
+
+					pfd[0].events = POLLIN | POLLHUP | POLLERR;
+					pfd[1].fd = private->fd;
+
+					pfd[1].events = POLLIN | POLLHUP | POLLERR;
+
+					if (poll(pfd,2,-1) < 0) {
+						gf_log (this->name, GF_LOG_ERROR,
+							"poll error %s", strerror(errno));
+						goto mount_err;
+					}
+					if (pfd[0].revents & POLLIN) {
+						if (fuse_get_mount_status(this) != 0) {
+							goto mount_err;
+						}
+						mount_finished = _gf_true;
+					}
+					else if (pfd[0].revents) {
+						gf_log (this->name, GF_LOG_ERROR,
+							"mount pipe closed without status");
+						goto mount_err;
+					}
+					if (!pfd[1].revents) {
+						continue;
+					}
+				} else {
+					break;
+				}
+			}
+
                         ret = gf_thread_create (&private->fuse_thread, NULL,
-						fuse_thread_proc, this);
+						fuse_thread_proc1, this);
                         if (ret != 0) {
                                 gf_log (this->name, GF_LOG_DEBUG,
                                         "pthread_create() failed (%s)",
                                         strerror (errno));
+
+				syslog(LOG_INFO | LOG_LOCAL0, "pthread_create() failed (%s)",
+					strerror (errno));
                                 break;
                         }
+
                 }
 		
 		if (!private->fuse_thread_started2) {
 			private->fuse_thread_started2 = 1;
 		
+			ret = gf_thread_create (&private->fuse_thread2, NULL,
+						fuse_thread_proc2, this);
+
+			if (ret != 0) {
+				gf_log (this->name, GF_LOG_DEBUG,
+					"pthread_create() failed (%s)",
+					strerror (errno));
+
+				syslog(LOG_INFO | LOG_LOCAL0, "pthread_create() failed (%s)",
+					strerror (errno));
+				break;
+			}
+	
 		}
 
                 break;
@@ -5088,6 +5567,23 @@ notify (xlator_t *this, int32_t event, void *data, ...)
         }
 
         return ret;
+
+ mount_err: /* dskim */
+ 	ret = -1;	
+	
+	if (dict_get (this->options, ZR_MOUNTPOINT_OPT))
+		mount_point = data_to_str (dict_get (this->options,
+							ZR_MOUNTPOINT_OPT));
+	
+	if (mount_point) {
+		gf_log (this->name, GF_LOG_INFO,
+				"unmounting %s", mount_point);
+
+		syslog(LOG_INFO | LOG_LOCAL0, "unmounting %s", mount_point);
+	}
+
+	kill(getpid(), SIGTERM);
+	return ret;
 }
 
 int32_t

@@ -23,7 +23,7 @@
 #include "byte-order.h"
 #include "common-utils.h"
 #include "compat-errno.h"
-
+#include <sys/log.h>
 
 /* ugly #includes below */
 #include "protocol-common.h"
@@ -578,6 +578,8 @@ __socket_readv (rpc_transport_t *this, struct iovec *vector, int count,
                 size_t *bytes)
 {
         int ret = -1;
+	
+	syslog(LOG_INFO | LOG_LOCAL1, "%s", __func__);
 
         ret = __socket_rwv (this, vector, count,
                             pending_vector, pending_count, bytes, 0);

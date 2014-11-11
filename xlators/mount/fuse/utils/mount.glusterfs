@@ -266,6 +266,9 @@ start_glusterfs ()
 
     cmd_line=$(echo "$cmd_line $mount_point");
     err=0;
+
+    echo $cmd_line;
+
     $cmd_line;
 
 
