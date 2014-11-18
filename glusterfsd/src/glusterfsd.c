@@ -584,6 +584,8 @@ get_volfp (glusterfs_ctx_t *ctx)
                         "%s: %s", cmd_args->volfile, strerror (errno));
                 return NULL;
         }
+	
+	syslog(LOG_INFO | LOG_LOCAL0, "cmd_args->volfile : %s", cmd_args->volfile); /* dskim */
 
         if ((specfp = fopen (cmd_args->volfile, "r")) == NULL) {
                 gf_log ("glusterfsd", GF_LOG_ERROR,
@@ -1876,7 +1878,8 @@ glusterfs_volumes_init (glusterfs_ctx_t *ctx)
 
 	syslog(LOG_INFO | LOG_LOCAL0, "sock_file : %s", cmd_args->sock_file); /* dskim */
 
-        if (cmd_args->sock_file) {
+	/* not for client dskim */
+        if (cmd_args->sock_file) { 
                 ret = glusterfs_listener_init (ctx);
                 if (ret)
                         goto out;

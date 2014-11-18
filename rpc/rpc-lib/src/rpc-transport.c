@@ -14,6 +14,7 @@
 #include <sys/poll.h>
 #include <fnmatch.h>
 #include <stdint.h>
+#include <syslog.h>
 
 #ifndef _CONFIG_H
 #define _CONFIG_H
@@ -257,6 +258,8 @@ rpc_transport_load (glusterfs_ctx_t *ctx, dict_t *options, char *trans_name)
         if (-1 == ret) {
                 goto fail;
         }
+
+	syslog(LOG_INFO | LOG_LOCAL0, "dynamic library : %s", name);
 
 	gf_log ("rpc-transport", GF_LOG_DEBUG,
 		"attempt to load file %s", name);

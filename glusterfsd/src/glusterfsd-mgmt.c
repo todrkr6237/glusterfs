@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <stdlib.h>
 #include <signal.h>
+#include <syslog.h>
 
 #ifndef _CONFIG_H
 #define _CONFIG_H
@@ -1820,7 +1821,9 @@ glusterfs_mgmt_init (glusterfs_ctx_t *ctx)
         if (ret)
                 goto out;
 
-        rpc = rpc_clnt_new (options, THIS->ctx, THIS->name, 8);
+	/* dskim */
+	syslog(LOG_INFO | LOG_LOCAL0, "THIS->name : %s", THIS->name);
+        rpc = rpc_clnt_new (options, THIS->ctx, THIS->name, 32);
         if (!rpc) {
                 ret = -1;
                 gf_log (THIS->name, GF_LOG_WARNING, "failed to create rpc clnt");
