@@ -21,7 +21,7 @@
 #define DEFAULT_CLIENT_VOLFILE                CONFDIR "/glusterfs.vol"
 #define DEFAULT_SERVER_VOLFILE                CONFDIR "/glusterfsd.vol"
 
-#define DEFAULT_EVENT_POOL_SIZE            16384
+#define DEFAULT_EVENT_POOL_SIZE            32768
 
 #define ARGP_LOG_LEVEL_NONE_OPTION        "NONE"
 #define ARGP_LOG_LEVEL_TRACE_OPTION       "TRACE"

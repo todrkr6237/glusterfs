@@ -123,7 +123,7 @@
 #define HAVE_STRUCT_STAT_ST_ATIM_TV_NSEC 1
 
 /* Define to 1 if using probes. */
-/* #undef HAVE_SYSTEMTAP */
+#define HAVE_SYSTEMTAP 1
 
 /* Define to 1 if you have the <sys/epoll.h> header file. */
 #define HAVE_SYS_EPOLL_H 1

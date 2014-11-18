@@ -1517,6 +1517,8 @@ glusterfs_pidfile_setup (glusterfs_ctx_t *ctx)
         if (!cmd_args->pid_file)
                 return 0;
 
+	syslog (LOG_INFO | LOG_LOCAL0, "pid_file : %s", cmd_args->pid_file); /* dskim */
+
         pidfp = fopen (cmd_args->pid_file, "a+");
         if (!pidfp) {
                 gf_log ("glusterfsd", GF_LOG_ERROR,
@@ -1872,6 +1874,8 @@ glusterfs_volumes_init (glusterfs_ctx_t *ctx)
 
         cmd_args = &ctx->cmd_args;
 
+	syslog(LOG_INFO | LOG_LOCAL0, "sock_file : %s", cmd_args->sock_file); /* dskim */
+
         if (cmd_args->sock_file) {
                 ret = glusterfs_listener_init (ctx);
                 if (ret)
@@ -1879,6 +1883,8 @@ glusterfs_volumes_init (glusterfs_ctx_t *ctx)
         }
 
         if (cmd_args->volfile_server) {
+		syslog(LOG_INFO | LOG_LOCAL0, "volfile_server : %s", cmd_args->volfile_server);
+
                 ret = glusterfs_mgmt_init (ctx);
                 /* return, do not emancipate() yet */
                 return ret;
@@ -1953,7 +1959,7 @@ main (int argc, char *argv[])
         gf_check_and_set_mem_acct (ctx, argc, argv);
 #endif
 
-        ret = glusterfs_globals_init (ctx);
+        ret = glusterfs_globals_init (ctx); /* pthread key init */
         if (ret)
                 return ret;
 
@@ -1990,7 +1996,7 @@ main (int argc, char *argv[])
         ret = create_fuse_mount (ctx);
         if (ret)
                 goto out;
-
+/* dskim */
         ret = daemonize (ctx);
         if (ret)
                 goto out;
@@ -2002,6 +2008,7 @@ main (int argc, char *argv[])
                 goto out;
         }
 
+	/* dskim !!!! */
         ret = glusterfs_volumes_init (ctx);
         if (ret)
                 goto out;
@@ -2012,6 +2019,7 @@ main (int argc, char *argv[])
 	}
 	syslog(LOG_INFO | LOG_LOCAL0, "=====glusterfsd end=====");
 
+#if 0
 	if (ctx->process_mode == GF_CLIENT_PROCESS) {
 		result = pthread_create(&event_thread[0], NULL, event_func1, (void *)ctx);
 		if (result < 0) {
@@ -2029,6 +2037,8 @@ main (int argc, char *argv[])
 	} else {
         	ret = event_dispatch (ctx->event_pool);
 	}
+#endif
+        ret = event_dispatch (ctx->event_pool);
 
 out:
 //        glusterfs_ctx_destroy (ctx);

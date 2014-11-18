@@ -24,6 +24,8 @@
 /* Make sure this array is sorted based on pagesize */
 struct iobuf_init_config gf_iobuf_init_config[] = {
         /* { pagesize, num_pages }, */
+	{4, 65536},
+	{64, 2048},
         {128, 1024},
         {512, 512},
         {2 * 1024, 512},
