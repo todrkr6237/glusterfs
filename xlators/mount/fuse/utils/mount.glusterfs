@@ -44,6 +44,7 @@ _init ()
         ;;
     Linux)
         getinode="stat -c %i $i"
+	echo "getinode : ${getinode}" # dskim
         getdev="stat -c %d $d"
         lgetinode="${getinode} -L"
         lgetdev="${getdev} -L"
@@ -267,8 +268,8 @@ start_glusterfs ()
     cmd_line=$(echo "$cmd_line $mount_point");
     err=0;
 
-    echo $cmd_line;
-
+    echo "mount_point : ${mount_point}" # dskim
+    echo "cmd_line : ${cmd_line}" # dskim
     $cmd_line;
 
 

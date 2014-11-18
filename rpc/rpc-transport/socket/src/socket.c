@@ -23,7 +23,7 @@
 #include "byte-order.h"
 #include "common-utils.h"
 #include "compat-errno.h"
-#include <sys/log.h>
+#include <syslog.h>
 
 /* ugly #includes below */
 #include "protocol-common.h"
