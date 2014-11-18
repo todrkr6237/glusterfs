@@ -54,5 +54,7 @@ heal/src/glfsheal
 api/examples/setup.py
 argp-standalone/autom4te.cache/
 autom4te.cache/
+config.status
+libtool
 # vim 
 *.swp
