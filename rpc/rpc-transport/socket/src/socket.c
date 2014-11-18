@@ -579,8 +579,6 @@ __socket_readv (rpc_transport_t *this, struct iovec *vector, int count,
 {
         int ret = -1;
 	
-	syslog(LOG_INFO | LOG_LOCAL1, "%s", __func__);
-
         ret = __socket_rwv (this, vector, count,
                             pending_vector, pending_count, bytes, 0);
 
