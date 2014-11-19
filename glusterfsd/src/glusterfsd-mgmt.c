@@ -1837,6 +1837,7 @@ glusterfs_mgmt_init (glusterfs_ctx_t *ctx)
                 goto out;
         }
 
+	/* dskim */
         ret = rpcclnt_cbk_program_register (rpc, &mgmt_cbk_prog, THIS);
         if (ret) {
                 gf_log (THIS->name, GF_LOG_WARNING,

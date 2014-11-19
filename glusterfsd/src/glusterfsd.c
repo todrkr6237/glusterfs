@@ -585,8 +585,6 @@ get_volfp (glusterfs_ctx_t *ctx)
                 return NULL;
         }
 	
-	syslog(LOG_INFO | LOG_LOCAL0, "cmd_args->volfile : %s", cmd_args->volfile); /* dskim */
-
         if ((specfp = fopen (cmd_args->volfile, "r")) == NULL) {
                 gf_log ("glusterfsd", GF_LOG_ERROR,
                         "volume file %s: %s",
@@ -1519,8 +1517,6 @@ glusterfs_pidfile_setup (glusterfs_ctx_t *ctx)
         if (!cmd_args->pid_file)
                 return 0;
 
-	syslog (LOG_INFO | LOG_LOCAL0, "pid_file : %s", cmd_args->pid_file); /* dskim */
-
         pidfp = fopen (cmd_args->pid_file, "a+");
         if (!pidfp) {
                 gf_log ("glusterfsd", GF_LOG_ERROR,
@@ -1888,7 +1884,7 @@ glusterfs_volumes_init (glusterfs_ctx_t *ctx)
         }
 
         if (cmd_args->volfile_server) {
-		syslog(LOG_INFO | LOG_LOCAL0, "volfile_server : %s", cmd_args->volfile_server);
+		syslog(LOG_INFO | LOG_LOCAL0, "cmd_args->volfile_server : %s", cmd_args->volfile_server);
 
                 ret = glusterfs_mgmt_init (ctx);
                 /* return, do not emancipate() yet */
@@ -2020,11 +2016,11 @@ main (int argc, char *argv[])
         if (ret)
                 goto out;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "====glusterfsd start====");
+	syslog(LOG_INFO | LOG_LOCAL0, "====glusterfsd arg start====");
 	for (i = 0; i < argc; i++) {
 		syslog(LOG_INFO | LOG_LOCAL0, "%s", argv[i]);
 	}
-	syslog(LOG_INFO | LOG_LOCAL0, "=====glusterfsd end=====");
+	syslog(LOG_INFO | LOG_LOCAL0, "=====glusterfsd arg end=====");
 
 #if 0
 	if (ctx->process_mode == GF_CLIENT_PROCESS) {

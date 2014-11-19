@@ -3727,7 +3727,7 @@ fuse_setlk (xlator_t *this, fuse_in_header_t *finh, void *msg)
         return;
 }
 
-
+/* dskim */
 static void *
 notify_kernel_loop (void *data)
 {
@@ -3737,6 +3737,10 @@ notify_kernel_loop (void *data)
         int                     rv   = 0;
 
         char inval_buf[INVAL_BUF_SIZE] = {0,};
+	FILE *tmpfd;
+
+	tmpfd = fopen("/var/log/tmplog.log", "wb");
+	syslog (LOG_INFO | LOG_LOCAL0, "[%d]: %s()", __LINE__, __func__);
 
         this = data;
         priv = this->private;
@@ -3753,8 +3757,10 @@ notify_kernel_loop (void *data)
                 rv = write (priv->fd, inval_buf, fouh->len);
                 if (rv != fouh->len && !(rv == -1 && errno == ENOENT))
                         break;
+		write (tmpfd, inval_buf, fouh->len);
         }
 
+	fclose (tmpfd);
         close (priv->revchan_in);
         close (priv->revchan_out);
 
@@ -5448,6 +5454,7 @@ notify (xlator_t *this, int32_t event, void *data, ...)
 	struct pollfd	    pfd[2] = {{0,}};
 	gf_boolean_t	    mount_finished = _gf_false;
 
+	syslog (LOG_INFO | LOG_LOCAL0, "[%d]: %s()", __LINE__, __func__);
 
         private = this->private;
 
