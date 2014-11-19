@@ -259,7 +259,7 @@ rpc_transport_load (glusterfs_ctx_t *ctx, dict_t *options, char *trans_name)
                 goto fail;
         }
 
-	syslog(LOG_INFO | LOG_LOCAL0, "dynamic library : %s", name);
+	//syslog(LOG_INFO | LOG_LOCAL0, "dynamic library : %s", name);
 
 	gf_log ("rpc-transport", GF_LOG_DEBUG,
 		"attempt to load file %s", name);

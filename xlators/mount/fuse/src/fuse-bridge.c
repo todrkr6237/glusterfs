@@ -3735,12 +3735,13 @@ notify_kernel_loop (void *data)
         fuse_private_t         *priv = NULL;
         struct fuse_out_header *fouh = NULL;
         int                     rv   = 0;
+	int			tmp  = 0;
 
         char inval_buf[INVAL_BUF_SIZE] = {0,};
-	FILE *tmpfd;
+	int tmpfd;
 
-	tmpfd = fopen("/var/log/tmplog.log", "wb");
-	syslog (LOG_INFO | LOG_LOCAL0, "[%d]: %s()", __LINE__, __func__);
+	tmpfd = open("/var/log/tmplog.log", O_RDWR);
+	syslog (LOG_INFO | LOG_LOCAL0, "[%d]: %s() : thread_id[%d]", __LINE__, __func__, (int) pthread_self());
 
         this = data;
         priv = this->private;
@@ -3758,10 +3759,10 @@ notify_kernel_loop (void *data)
                 if (rv != fouh->len && !(rv == -1 && errno == ENOENT))
                         break;
 		syslog (LOG_INFO | LOG_LOCAL1, "write in %s", __func__);
-		write (tmpfd, inval_buf, fouh->len);
+		tmp = write (tmpfd, inval_buf, fouh->len);
         }
 
-	fclose (tmpfd);
+	close (tmpfd);
         close (priv->revchan_in);
         close (priv->revchan_out);
 
@@ -4635,7 +4636,7 @@ fuse_thread_proc1 (void *data)
         const size_t              msg0_size = sizeof (*finh) + 128;
         fuse_handler_t          **fuse_ops = NULL;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "%s()", __func__);
+	syslog(LOG_INFO | LOG_LOCAL0, "%s() thread_id[%d]", __func__, (int) pthread_self());
 
         this = data;
         priv = this->private;
@@ -4832,7 +4833,7 @@ fuse_thread_proc2 (void *data)
         const size_t              msg0_size = sizeof (*finh) + 128;
         fuse_handler_t          **fuse_ops = NULL;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "%s()", __func__);
+	syslog(LOG_INFO | LOG_LOCAL0, "%s() thread_id[%d]", __func__, (int) pthread_self());
 
         this = data;
         priv = this->private;
@@ -5922,7 +5923,7 @@ init (xlator_t *this_xl)
         if (!fsname)
                 fsname = "glusterfs";
 
-	
+	/* dskim */	
         priv->fdtable = gf_fd_fdtable_alloc ();
         if (priv->fdtable == NULL) {
                 gf_log ("glusterfs-fuse", GF_LOG_ERROR, "Out of memory");
