@@ -1873,6 +1873,8 @@ glusterfs_volumes_init (glusterfs_ctx_t *ctx)
         FILE               *fp = NULL;
         cmd_args_t         *cmd_args = NULL;
         int                 ret = 0;
+	
+	syslog(LOG_INFO | LOG_LOCAL0, "==== start %s() ====", __func__);
 
         cmd_args = &ctx->cmd_args;
 
@@ -1908,6 +1910,8 @@ glusterfs_volumes_init (glusterfs_ctx_t *ctx)
 
 out:
         emancipate (ctx, ret);
+
+	syslog(LOG_INFO | LOG_LOCAL0, "==== end %s() ====", __func__);
         return ret;
 }
 
