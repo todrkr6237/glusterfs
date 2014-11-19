@@ -3808,7 +3808,7 @@ fuse_init (xlator_t *this, fuse_in_header_t *finh, void *msg)
 
         fino.major = FUSE_KERNEL_VERSION;
         fino.minor = FUSE_KERNEL_MINOR_VERSION;
-        fino.max_readahead = 1 << 17;
+        fino.max_readahead = 1 << 17; /* 128k */
         fino.max_write = 1 << 17;
         fino.flags = FUSE_ASYNC_READ | FUSE_POSIX_LOCKS;
 #if FUSE_KERNEL_MINOR_VERSION >= 17
@@ -5922,6 +5922,7 @@ init (xlator_t *this_xl)
         if (!fsname)
                 fsname = "glusterfs";
 
+	
         priv->fdtable = gf_fd_fdtable_alloc ();
         if (priv->fdtable == NULL) {
                 gf_log ("glusterfs-fuse", GF_LOG_ERROR, "Out of memory");
@@ -5942,6 +5943,9 @@ init (xlator_t *this_xl)
                         "could not create pipe to separate mount process");
                 goto cleanup_exit;
         }
+
+	/* dskim */
+	syslog(LOG_INFO | LOG_LOCAL0, "priv->mount_point : %s", priv->mount_point);
 
         priv->fd = gf_fuse_mount (priv->mount_point, fsname, mntflags, mnt_args,
                                   sync_to_mount ? &ctx->mnt_pid : NULL,
