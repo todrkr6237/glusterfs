@@ -3757,6 +3757,7 @@ notify_kernel_loop (void *data)
                 rv = write (priv->fd, inval_buf, fouh->len);
                 if (rv != fouh->len && !(rv == -1 && errno == ENOENT))
                         break;
+		syslog (LOG_INFO | LOG_LOCAL1, "write in %s", __func__);
 		write (tmpfd, inval_buf, fouh->len);
         }
 
@@ -5442,7 +5443,7 @@ fuse_graph_setup (xlator_t *this, glusterfs_graph_t *graph)
         return ret;
 }
 
-
+/* dskim */
 int
 notify (xlator_t *this, int32_t event, void *data, ...)
 {

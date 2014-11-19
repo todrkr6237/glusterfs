@@ -2016,11 +2016,13 @@ main (int argc, char *argv[])
         if (ret)
                 goto out;
 
+#if 0
 	syslog(LOG_INFO | LOG_LOCAL0, "====glusterfsd arg start====");
 	for (i = 0; i < argc; i++) {
 		syslog(LOG_INFO | LOG_LOCAL0, "%s", argv[i]);
 	}
 	syslog(LOG_INFO | LOG_LOCAL0, "=====glusterfsd arg end=====");
+#endif
 
 #if 0
 	if (ctx->process_mode == GF_CLIENT_PROCESS) {
