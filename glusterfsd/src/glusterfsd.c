@@ -1870,11 +1870,11 @@ glusterfs_volumes_init (glusterfs_ctx_t *ctx)
         cmd_args_t         *cmd_args = NULL;
         int                 ret = 0;
 	
-	syslog(LOG_INFO | LOG_LOCAL0, "==== start %s() ====", __func__);
+	syslog (LOG_INFO | LOG_LOCAL0, "==== start %s() ====", __func__);
 
         cmd_args = &ctx->cmd_args;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "sock_file : %s", cmd_args->sock_file); /* dskim */
+	syslog (LOG_INFO | LOG_LOCAL0, "sock_file : %s", cmd_args->sock_file); /* dskim */
 
 	/* not for client dskim */
         if (cmd_args->sock_file) { 
@@ -1884,7 +1884,7 @@ glusterfs_volumes_init (glusterfs_ctx_t *ctx)
         }
 
         if (cmd_args->volfile_server) {
-		syslog(LOG_INFO | LOG_LOCAL0, "cmd_args->volfile_server : %s", cmd_args->volfile_server);
+		syslog (LOG_INFO | LOG_LOCAL0, "cmd_args->volfile_server : %s", cmd_args->volfile_server);
 
                 ret = glusterfs_mgmt_init (ctx);
                 /* return, do not emancipate() yet */
@@ -1907,7 +1907,7 @@ glusterfs_volumes_init (glusterfs_ctx_t *ctx)
 out:
         emancipate (ctx, ret);
 
-	syslog(LOG_INFO | LOG_LOCAL0, "==== end %s() ====", __func__);
+	syslog (LOG_INFO | LOG_LOCAL0, "==== end %s() ====", __func__);
         return ret;
 }
 
@@ -1926,12 +1926,11 @@ void *event_func1(void *arg)
 
 void *event_func2(void *arg)
 {
-#if 0
+#if 1
 	glusterfs_ctx_t  *ctx = (glusterfs_ctx_t *)arg;
 	int		  ret = -1;
 
-	ret = event_dispatch (ctx->event_pool2);
-	return NULL;
+	ret = event_dispatch (ctx->event_pool);
 #endif
 	return NULL;
 }
@@ -2017,30 +2016,30 @@ main (int argc, char *argv[])
                 goto out;
 
 #if 0
-	syslog(LOG_INFO | LOG_LOCAL0, "====glusterfsd arg start====");
+	syslog (LOG_INFO | LOG_LOCAL0, "====glusterfsd arg start====");
 	for (i = 0; i < argc; i++) {
-		syslog(LOG_INFO | LOG_LOCAL0, "%s", argv[i]);
+		syslog (LOG_INFO | LOG_LOCAL0, "%s", argv[i]);
 	}
-	syslog(LOG_INFO | LOG_LOCAL0, "=====glusterfsd arg end=====");
+	syslog (LOG_INFO | LOG_LOCAL0, "=====glusterfsd arg end=====");
 #endif
 
 #if 0
 	if (ctx->process_mode == GF_CLIENT_PROCESS) {
 		result = pthread_create(&event_thread[0], NULL, event_func1, (void *)ctx);
 		if (result < 0) {
-			syslog(LOG_INFO | LOG_LOCAL0, "%s", "thread1 create error!");
+			syslog (LOG_INFO | LOG_LOCAL0, "%s", "thread1 create error!");
 		}
 
 		result = pthread_create(&event_thread[1], NULL, event_func2, (void *)ctx);
 		if (result < 0) {
-			syslog(LOG_INFO | LOG_LOCAL0, "%s", "thread2 create error!");
+			syslog (LOG_INFO | LOG_LOCAL0, "%s", "thread2 create error!");
 		}
 
 		pthread_join(event_thread[0], (void *)&status);
 		pthread_join(event_thread[1], (void *)&status);
 
 	} else {
-        	ret = event_dispatch (ctx->event_pool);
+        	ret = event_dispatch (ctx->event_pool); 
 	}
 #endif
         ret = event_dispatch (ctx->event_pool);

@@ -424,7 +424,7 @@ posix_aio_thread (void *data)
 	THIS = this;
         priv = this->private;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "%s", __func__);
+	syslog (LOG_INFO | LOG_LOCAL0, "%s()", __func__);
 
         for (;;) {
                 memset (&events[0], 0, sizeof (events));

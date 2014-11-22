@@ -2134,7 +2134,7 @@ fuse_readv_cbk (call_frame_t *frame, void *cookie, xlator_t *this,
         }
 
 #if 0
-	syslog(LOG_INFO | LOG_LOCAL1, "gfid : %s", uuid_utoa (state->gfid));
+	syslog (LOG_INFO | LOG_LOCAL1, "gfid : %s", uuid_utoa (state->gfid));
 #endif
 
         free_fuse_state (state);
@@ -3727,7 +3727,6 @@ fuse_setlk (xlator_t *this, fuse_in_header_t *finh, void *msg)
         return;
 }
 
-/* dskim */
 static void *
 notify_kernel_loop (void *data)
 {
@@ -3735,13 +3734,8 @@ notify_kernel_loop (void *data)
         fuse_private_t         *priv = NULL;
         struct fuse_out_header *fouh = NULL;
         int                     rv   = 0;
-	int			tmp  = 0;
 
         char inval_buf[INVAL_BUF_SIZE] = {0,};
-	int tmpfd;
-
-	tmpfd = open("/var/log/tmplog.log", O_RDWR);
-	syslog (LOG_INFO | LOG_LOCAL0, "[%d]: %s() : thread_id[%d]", __LINE__, __func__, (int) pthread_self());
 
         this = data;
         priv = this->private;
@@ -3758,11 +3752,8 @@ notify_kernel_loop (void *data)
                 rv = write (priv->fd, inval_buf, fouh->len);
                 if (rv != fouh->len && !(rv == -1 && errno == ENOENT))
                         break;
-		syslog (LOG_INFO | LOG_LOCAL1, "write in %s", __func__);
-		tmp = write (tmpfd, inval_buf, fouh->len);
         }
 
-	close (tmpfd);
         close (priv->revchan_in);
         close (priv->revchan_out);
 
@@ -3783,7 +3774,7 @@ fuse_init (xlator_t *this, fuse_in_header_t *finh, void *msg)
         int                   pfd[2]    = {0,};
         pthread_t             messenger;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "[%d]: %s()", __LINE__, __func__);
+	syslog (LOG_INFO | LOG_LOCAL0, "[%d]: %s()", __LINE__, __func__);
 
         priv = this->private;
 
@@ -3810,7 +3801,7 @@ fuse_init (xlator_t *this, fuse_in_header_t *finh, void *msg)
         fino.major = FUSE_KERNEL_VERSION;
         fino.minor = FUSE_KERNEL_MINOR_VERSION;
         fino.max_readahead = 1 << 17; /* 128k */
-        fino.max_write = 1 << 17;
+        fino.max_write = 1 << 17; /* 128k */
         fino.flags = FUSE_ASYNC_READ | FUSE_POSIX_LOCKS;
 #if FUSE_KERNEL_MINOR_VERSION >= 17
 	if (fini->minor >= 17)
@@ -3920,6 +3911,7 @@ fuse_init (xlator_t *this, fuse_in_header_t *finh, void *msg)
 	if (fini->flags & FUSE_ASYNC_DIO)
 		fino.flags |= FUSE_ASYNC_DIO;
 
+	/* dskim */
         ret = send_fuse_obj (this, finh, &fino);
         if (ret == 0)
                 gf_log ("glusterfs-fuse", GF_LOG_INFO,
@@ -4636,7 +4628,7 @@ fuse_thread_proc1 (void *data)
         const size_t              msg0_size = sizeof (*finh) + 128;
         fuse_handler_t          **fuse_ops = NULL;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "%s() thread_id[%d]", __func__, (int) pthread_self());
+	syslog (LOG_INFO | LOG_LOCAL0, "%s() thread_id[%lu]", __func__, pthread_self());
 
         this = data;
         priv = this->private;
@@ -4696,7 +4688,7 @@ fuse_thread_proc1 (void *data)
 
                 iov_in[1].iov_base = iobuf->ptr;
 	
-		//syslog(LOG_INFO | LOG_LOCAL1, "priv->fd : %d",  priv->fd);
+		//syslog (LOG_INFO | LOG_LOCAL1, "priv->fd : %d",  priv->fd);
 
                 res = readv (priv->fd, iov_in, 2);
 
@@ -4833,7 +4825,7 @@ fuse_thread_proc2 (void *data)
         const size_t              msg0_size = sizeof (*finh) + 128;
         fuse_handler_t          **fuse_ops = NULL;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "%s() thread_id[%d]", __func__, (int) pthread_self());
+	syslog (LOG_INFO | LOG_LOCAL0, "%s() thread_id[%lu]", __func__, pthread_self());
 
         this = data;
         priv = this->private;
@@ -4893,7 +4885,7 @@ fuse_thread_proc2 (void *data)
 
                 iov_in[1].iov_base = iobuf->ptr;
 	
-		//syslog(LOG_INFO | LOG_LOCAL1, "priv->fd : %d",  priv->fd);
+		//syslog (LOG_INFO | LOG_LOCAL1, "priv->fd : %d",  priv->fd);
 
                 res = readv (priv->fd, iov_in, 2);
 
@@ -5034,7 +5026,7 @@ fuse_thread_proc (void *data)
         struct pollfd             pfd[2] = {{0,}};
         gf_boolean_t              mount_finished = _gf_false;
 
-	syslog(LOG_INFO | LOG_LOCAL0, "%s()", __func__);
+	syslog (LOG_INFO | LOG_LOCAL0, "%s()", __func__);
 
         this = data;
         priv = this->private;
@@ -5095,12 +5087,12 @@ fuse_thread_proc (void *data)
                 if (!mount_finished) {
                         memset(pfd,0,sizeof(pfd));
                         pfd[0].fd = priv->status_pipe[0];
-			syslog(LOG_INFO | LOG_LOCAL0, "priv->status_pipe[0] : %d | importatnt", priv->status_pipe[0]);
+			syslog (LOG_INFO | LOG_LOCAL0, "priv->status_pipe[0] : %d | importatnt", priv->status_pipe[0]);
 
                         pfd[0].events = POLLIN | POLLHUP | POLLERR;
                         pfd[1].fd = priv->fd;
 
-			syslog(LOG_INFO | LOG_LOCAL0, "priv->fd : %d", priv->fd);
+			syslog (LOG_INFO | LOG_LOCAL0, "priv->fd : %d", priv->fd);
 
                         pfd[1].events = POLLIN | POLLHUP | POLLERR;
                         if (poll(pfd,2,-1) < 0) {
@@ -5165,7 +5157,7 @@ fuse_thread_proc (void *data)
 
                 iov_in[1].iov_base = iobuf->ptr;
 	
-		//syslog(LOG_INFO | LOG_LOCAL1, "priv->fd : %d",  priv->fd);
+		//syslog (LOG_INFO | LOG_LOCAL1, "priv->fd : %d",  priv->fd);
 
                 res = readv (priv->fd, iov_in, 2);
 
@@ -5535,31 +5527,31 @@ notify (xlator_t *this, int32_t event, void *data, ...)
                                         "pthread_create() failed (%s)",
                                         strerror (errno));
 
-				syslog(LOG_INFO | LOG_LOCAL0, "pthread_create() failed (%s)",
+				syslog (LOG_INFO | LOG_LOCAL0, "pthread_create() failed (%s)",
 					strerror (errno));
                                 break;
                         }
+#if 0
+			if (!private->fuse_thread_started2) {
+				private->fuse_thread_started2 = 1;
 
-                }
-		
-		if (!private->fuse_thread_started2) {
-			private->fuse_thread_started2 = 1;
-		
-			ret = gf_thread_create (&private->fuse_thread2, NULL,
+				ret = gf_thread_create (&private->fuse_thread2, NULL,
 						fuse_thread_proc2, this);
 
-			if (ret != 0) {
-				gf_log (this->name, GF_LOG_DEBUG,
-					"pthread_create() failed (%s)",
-					strerror (errno));
+				if (ret != 0) {
+					gf_log (this->name, GF_LOG_DEBUG,
+							"pthread_create() failed (%s)",
+							strerror (errno));
 
-				syslog(LOG_INFO | LOG_LOCAL0, "pthread_create() failed (%s)",
-					strerror (errno));
-				break;
+					syslog (LOG_INFO | LOG_LOCAL0, "pthread_create() failed (%s)",
+							strerror (errno));
+					break;
+				}
+
 			}
-	
-		}
+#endif
 
+                }
                 break;
         }
 
@@ -5588,7 +5580,7 @@ notify (xlator_t *this, int32_t event, void *data, ...)
 		gf_log (this->name, GF_LOG_INFO,
 				"unmounting %s", mount_point);
 
-		syslog(LOG_INFO | LOG_LOCAL0, "unmounting %s", mount_point);
+		syslog (LOG_INFO | LOG_LOCAL0, "unmounting %s", mount_point);
 	}
 
 	kill(getpid(), SIGTERM);
@@ -5946,7 +5938,7 @@ init (xlator_t *this_xl)
         }
 
 	/* dskim */
-	syslog(LOG_INFO | LOG_LOCAL0, "priv->mount_point : %s", priv->mount_point);
+	syslog (LOG_INFO | LOG_LOCAL0, "priv->mount_point : %s", priv->mount_point);
 
         priv->fd = gf_fuse_mount (priv->mount_point, fsname, mntflags, mnt_args,
                                   sync_to_mount ? &ctx->mnt_pid : NULL,
