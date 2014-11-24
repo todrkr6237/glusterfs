@@ -5686,7 +5686,7 @@ fuse_dumper (xlator_t *this, fuse_in_header_t *finh, void *msg)
         priv->fuse_ops0[finh->opcode] (this, finh, msg);
 }
 
-
+/* dskim */
 int
 init (xlator_t *this_xl)
 {
